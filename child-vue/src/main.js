@@ -3,6 +3,7 @@ import App from './App'
 import './public-path'
 import VueRouter from 'vue-router'
 import { getRoutes } from './router'
+import store from './store'
 
 Vue.use(VueRouter)
 
@@ -11,13 +12,13 @@ let router = null
 
 function render(props) {
 	const { container, routePrefix } = props
-	console.log('child $mount el', container, container.querySelector('#app'), container.querySelector('#app').children)
 
 	router = new VueRouter({
 		mode: 'hash',
 		routes: getRoutes(window.__POWERED_BY_QIANKUN__ ? routePrefix : '/'),
 	})
 	instance = new Vue({
+		store,
 		router,
 		render: (h) => h(App),
 	}).$mount(container ? container.querySelector('#app') : '#app')
@@ -32,6 +33,12 @@ export async function bootstrap() {
 }
 export async function mount(props) {
 	console.log('child call mount')
+	props.onGlobalStateChange((state, prev) => {
+		console.log('child state', state)
+		console.log('child prev', prev)
+		store.commit('setQiankunData', state)
+	}, true) // 立即触发callback事件
+	store.commit('initQiankunSetGlobalStateFunc', props.setGlobalState)
 	render(props)
 }
 export async function unmount() {
